@@ -17,6 +17,7 @@
 package com.example.android.guesstheword.screens.game
 
 import android.os.Bundle
+import android.text.format.DateUtils
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
@@ -54,18 +55,17 @@ class GameFragment : Fragment() {
                 container,
                 false
         )
-        viewModel.score.observe(this, Observer { newScore -> binding.scoreText.text = newScore.toString() })
-        viewModel.word.observe(this, Observer { newWord -> binding.wordText.text = newWord })
+
+
+        binding.gameViewModel = viewModel
+        binding.lifecycleOwner = this
+
         viewModel.eventGameFinish.observe(this, Observer { hasFinished ->
-                if (hasFinished) {
-                    gameFinished()
-                    viewModel.onGameFinishComplete()
-                }
+            if (hasFinished) {
+                gameFinished()
+                viewModel.onGameFinishComplete()
+            }
         })
-
-
-        binding.correctButton.setOnClickListener { viewModel.onCorrect() }
-        binding.skipButton.setOnClickListener { viewModel.onSkip() }
 
         return binding.root
 
@@ -77,9 +77,7 @@ class GameFragment : Fragment() {
     private fun gameFinished() {
         val currentScore = viewModel.score.value ?:0
         val action = GameFragmentDirections.actionGameToScore(currentScore)
-        NavHostFragment.findNavController(this).navigate(action)
+        findNavController(this).navigate(action)
     }
-
-
 
 }

@@ -1,10 +1,12 @@
 package com.example.android.guesstheword.screens.game
 
-import android.util.Log
+import android.os.CountDownTimer
+import android.text.format.DateUtils
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.Transformations
 import androidx.lifecycle.ViewModel
-import androidx.navigation.fragment.NavHostFragment
+
 
 class GameViewModel:ViewModel(){
 
@@ -19,21 +21,48 @@ class GameViewModel:ViewModel(){
     val score: LiveData<Int>
         get() = _score
 
-    private val _eventFameFinish=MutableLiveData<Boolean>()
+    private val _eventGameFinish=MutableLiveData<Boolean>()
     val eventGameFinish: LiveData<Boolean>
-        get() = _eventFameFinish
+        get() = _eventGameFinish
+
+    private val _currentTime=MutableLiveData<Long>()
+    val currentTime: LiveData<Long>
+        get() = _currentTime
+
+    val currentTimeString = Transformations.map(_currentTime) { time ->
+        DateUtils.formatElapsedTime(time)
+    }
 
     private lateinit var wordList: MutableList<String>
+
+    val timer:CountDownTimer
+
 
     init {
         _score.value=0
         resetList()
         nextWord()
-        _eventFameFinish.value=false
+        _eventGameFinish.value=false
+
+        timer = object : CountDownTimer(COUNTDOWN_TIME, ONE_SECOND) {
+
+            override fun onTick(millisUntilFinished: Long) {
+                // TODO implement what should happen each tick of the timer
+                _currentTime.value = millisUntilFinished/1000
+            }
+
+            override fun onFinish() {
+                // TODO implement what should happen when the timer finishes
+                _eventGameFinish.value=true
+            }
+        }
+
+        timer.start()
     }
 
     override fun onCleared() {
         super.onCleared()
+        timer.cancel()
     }
 
     /**
@@ -73,7 +102,8 @@ class GameViewModel:ViewModel(){
     private fun nextWord() {
         //Select and remove a word from the list
         if (wordList.isEmpty()) {
-            _eventFameFinish.value = true
+            resetList()
+            nextWord()
         } else {
             _word.value = wordList.removeAt(0)
         }
@@ -92,6 +122,17 @@ class GameViewModel:ViewModel(){
     }
 
     fun onGameFinishComplete(){
-        _eventFameFinish.value= false
+        _eventGameFinish.value= false
+    }
+    companion object {
+        // These represent different important times
+        // This is when the game is over
+        const val DONE = 0L
+        // This is the number of milliseconds in a second
+        const val ONE_SECOND = 1000L
+        // This is the total time of the game
+        const val COUNTDOWN_TIME = 5000L
+
+
     }
 }
