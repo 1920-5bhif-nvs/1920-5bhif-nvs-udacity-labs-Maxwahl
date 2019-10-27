@@ -26,9 +26,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
-import retrofit2.Call
-import retrofit2.Callback
-import retrofit2.Response
 
 /**
  * The [ViewModel] that is attached to the [OverviewFragment].
@@ -48,6 +45,19 @@ class OverviewViewModel : ViewModel() {
         get() = _properties
 
 
+    private val _navigateToSelectedProperty = MutableLiveData<MarsProperty>()
+
+    val navigateToSelectedProperty: LiveData<MarsProperty>
+        get() = _navigateToSelectedProperty
+
+    fun displayPropertyDetails(marsProperty: MarsProperty) {
+        _navigateToSelectedProperty.value = marsProperty
+    }
+
+    fun displayPropertyDetailsComplete() {
+        _navigateToSelectedProperty.value = null
+    }
+
     private var viewModelJob = Job()
     private val coroutineScope = CoroutineScope(viewModelJob + Dispatchers.Main )
 
@@ -55,16 +65,20 @@ class OverviewViewModel : ViewModel() {
      * Call getMarsRealEstateProperties() on init so we can display status immediately.
      */
     init {
-        getMarsRealEstateProperties()
+        getMarsRealEstateProperties(MarsApi.MarsApiFilter.SHOW_ALL)
+    }
+
+    fun updateFilter(filter: MarsApi.MarsApiFilter) {
+        getMarsRealEstateProperties(filter)
     }
 
     /**
      * Sets the value of the status LiveData to the Mars API status.
      */
-    private fun getMarsRealEstateProperties() {
+    private fun getMarsRealEstateProperties(filter: MarsApi.MarsApiFilter) {
 
         coroutineScope.launch {
-            var getPropertiesDeferred = MarsApi.retrofitService.getProperties()
+            var getPropertiesDeferred = MarsApi.retrofitService.getProperties(filter.value)
             try {
                 _status.value=MarsApiStatus.LOADING
                 var listResult = getPropertiesDeferred.await()
@@ -84,4 +98,6 @@ class OverviewViewModel : ViewModel() {
     }
 
     enum class MarsApiStatus { LOADING, ERROR, DONE }
+
+
 }
