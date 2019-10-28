@@ -1,4 +1,4 @@
 package com.example.android.aboutme
 
-class MyName {
+data class MyName(var name: String = "", var nickname: String = "") {
 }
